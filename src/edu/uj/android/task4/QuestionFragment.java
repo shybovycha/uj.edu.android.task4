@@ -3,9 +3,7 @@ package edu.uj.android.task4;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
-import android.graphics.drawable.Drawable;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,32 +11,26 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
 /**
  * Created by shybovycha on 27.10.14.
  */
-public class QuestionFragment extends Fragment implements AnswerFragment.OnAnswerSelectedListener {
+public class QuestionFragment extends Fragment {
     public interface OnQuestionAnsweredListener {
         public void onQuestionAnswered(boolean isCorrect);
     }
 
     protected OnQuestionAnsweredListener questionListener;
-    protected String questionText;
+    protected Question question;
     protected int questionNumber;
-    protected int correctIndex;
 
     public QuestionFragment() {
         super();
     }
 
     @SuppressLint("ValidFragment")
-    public QuestionFragment(int questionNumber, String questionText, int correctIndex) {
-        this.questionText = questionText;
+    public QuestionFragment(int questionNumber, Question question) {
+        this.question = question;
         this.questionNumber = questionNumber;
-        this.correctIndex = correctIndex;
     }
 
     @Override
@@ -46,29 +38,26 @@ public class QuestionFragment extends Fragment implements AnswerFragment.OnAnswe
         View v = inflater.inflate(R.layout.question_fragment, container, false);
 
         ((TextView) v.findViewById(R.id.question_number)).setText(String.format("%d", questionNumber));
-        ((TextView) v.findViewById(R.id.question_text)).setText(questionText);
+        ((TextView) v.findViewById(R.id.question_text)).setText(question.getText());
 
-        FragmentManager fragmentManager = getFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        ((ImageView) v.findViewById(R.id.answer0)).setImageDrawable(question.getAnswers().get(0).getImage());
+        ((ImageView) v.findViewById(R.id.answer1)).setImageDrawable(question.getAnswers().get(1).getImage());
+        ((ImageView) v.findViewById(R.id.answer2)).setImageDrawable(question.getAnswers().get(2).getImage());
+        ((ImageView) v.findViewById(R.id.answer3)).setImageDrawable(question.getAnswers().get(3).getImage());
 
-        List<Integer> drawables = new ArrayList<Integer>();
+        View.OnClickListener clickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int answerIndex = Integer.parseInt((String) view.getTag());
 
-        drawables.add(R.drawable.ic_launcher_appwidget);
-        drawables.add(R.drawable.ic_launcher_home);
-        drawables.add(R.drawable.ic_launcher_wallpaper);
-        drawables.add(R.drawable.ic_search_widget);
+                questionListener.onQuestionAnswered(question.isCorrect(answerIndex));
+            }
+        };
 
-        int answerCount = drawables.size();
-
-        for (int i = 0; i < answerCount; i++) {
-            boolean isCorrect = (i == this.correctIndex);
-            Integer drawableId = drawables.get(i);
-
-            AnswerFragment fragment = new AnswerFragment(v.getResources().getDrawable(drawableId), isCorrect);
-            fragmentTransaction.add(R.id.answers_container, fragment);
-        }
-
-        fragmentTransaction.commit();
+        (v.findViewById(R.id.answer0)).setOnClickListener(clickListener);
+        (v.findViewById(R.id.answer1)).setOnClickListener(clickListener);
+        (v.findViewById(R.id.answer2)).setOnClickListener(clickListener);
+        (v.findViewById(R.id.answer3)).setOnClickListener(clickListener);
 
         return v;
     }
@@ -82,10 +71,5 @@ public class QuestionFragment extends Fragment implements AnswerFragment.OnAnswe
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString() + " must implement OnAnswerSelectedListener");
         }
-    }
-
-    @Override
-    public void onAnswerSelected(boolean isCorrect) {
-        questionListener.onQuestionAnswered(isCorrect);
     }
 }
